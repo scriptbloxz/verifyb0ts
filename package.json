@@ -1,7 +1,6 @@
 {
-  "name": "roblox-stealer",
+  "name": "roblox-proxy",
   "version": "1.0.0",
-  "description": "Roblox Cookie Stealer",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
